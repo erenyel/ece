@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ece Gelişim Platformu</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#7C4DFF">
+    
+    <link rel="icon" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-main: #0F111A;
+            --bg-card: #1A1D2B;
+            --accent: #7C4DFF;
+            --accent-hover: #9575CD;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0AEC0;
+            --border: #2D3748;
+            --success: #48BB78;
+            --danger: #FF5252;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-main); color: var(--text-primary); line-height: 1.6; overflow-x: hidden; }
+
+        header {
+            position: fixed; top: 0; left: 0; width: 100%; height: 60px;
+            background: var(--bg-card); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding-left: 20px; z-index: 1010;
+            font-weight: bold; color: var(--accent); letter-spacing: 1px;
+        }
+
+        .header-logo {
+            height: 32px;
+            width: 32px;
+            margin-right: 12px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        nav {
+            position: fixed; left: 0; top: 60px; height: calc(100vh - 60px); width: 80px;
+            background-color: var(--bg-card); display: flex; flex-direction: column;
+            align-items: center; padding-top: 1rem; border-right: 1px solid var(--border);
+            z-index: 1000; transition: width 0.3s ease;
+        }
+        nav:hover { width: 200px; }
+        .nav-item {
+            width: 100%; padding: 1.2rem; display: flex; align-items: center;
+            color: var(--text-secondary); text-decoration: none; cursor: pointer;
+            transition: 0.2s; overflow: hidden; white-space: nowrap;
+        }
+        .nav-item i { min-width: 40px; font-size: 1.2rem; text-align: center; }
+        .nav-item span { margin-left: 15px; opacity: 0; transition: opacity 0.3s; }
+        nav:hover .nav-item span { opacity: 1; }
+        .nav-item.active { color: var(--text-primary); background-color: var(--accent); }
+
+        #panic-button {
+            position: fixed; left: 15px; bottom: 20px; width: 50px; height: 50px;
+            background: var(--danger); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 1001; box-shadow: 0 4px 10px rgba(255, 82, 82, 0.3);
+            transition: transform 0.2s;
+        }
+        .shake { animation: shakeAnim 0.5s; }
+        @keyframes shakeAnim {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        #panic-menu {
+            position: fixed; left: 80px; bottom: 20px; background: var(--bg-card);
+            border: 1px solid var(--border); padding: 15px; border-radius: 12px;
+            display: none; flex-direction: column; gap: 10px; z-index: 1002;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .panic-link { color: var(--text-primary); text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; padding: 5px 0; }
+
+        main { margin-left: 80px; margin-top: 60px; padding: 2rem; min-height: calc(100vh - 60px); transition: margin-left 0.3s; }
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border); margin-bottom: 2rem; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; background: #1F2233; border: 1px solid var(--border); color: white; border-radius: 6px; font-size: 0.9rem; }
+        .btn { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        
+        .item-row { 
+            display: flex; align-items: flex-start; gap: 12px; padding: 10px; 
+            border-bottom: 1px solid #24283b; word-break: break-word; 
+        }
+        .item-row input[type="checkbox"] { flex-shrink: 0; width: 18px; height: 18px; margin-top: 4px; accent-color: var(--accent); }
+        .item-row span { flex-grow: 1; min-width: 0; }
+        .delete-icon { flex-shrink: 0; margin-left: auto; color: var(--danger); cursor: pointer; opacity: 0.5; padding: 5px; }
+        .delete-icon:hover { opacity: 1; }
+
+        .progress-wrapper { width: 100%; background: #1F2233; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 25px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--success)); width: 0%; transition: width 0.8s ease; }
+        .task-done span { text-decoration: line-through; color: var(--text-secondary); }
+
+        #toast { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: white; padding: 12px 24px; border-radius: 8px; transform: translateY(100px); transition: 0.4s; z-index: 2000; }
+        #toast.show { transform: translateY(0); }
+
+        @media screen and (max-width: 768px) {
+            header { justify-content: center; padding-left: 0; font-size: 0.9rem; }
+            nav {
+                top: auto; bottom: 0; height: 60px; width: 100%;
+                flex-direction: row; padding-top: 0; border-right: none;
+                border-top: 1px solid var(--border); justify-content: space-around;
+            }
+            nav:hover { width: 100%; }
+            .nav-item { width: auto; padding: 0.5rem; flex-direction: column; justify-content: center; }
+            .nav-item i { min-width: auto; font-size: 1.1rem; }
+            .nav-item span { display: none; }
+            main { margin-left: 0; margin-bottom: 60px; padding: 1rem; }
+            .card > div[style*="grid-template-columns"] { 
+                grid-template-columns: 1fr !important; 
+            }
+            #sayfa2 > div, #sayfa3 > div, #sayfa4 > div {
+                grid-template-columns: 1fr !important;
+            }
+            #panic-button { left: auto; right: 15px; bottom: 75px; }
+            #panic-menu { left: auto; right: 15px; bottom: 135px; width: 200px; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="icon-512.png" alt="Logo" class="header-logo">
+    ECE GELİŞİM PLATFORMU
+</header>
+
+<nav>
+    <div class="nav-item active" onclick="showPage('sayfa1')"><i class="fas fa-tasks"></i><span>Plan</span></div>
+    <div class="nav-item" onclick="showPage('sayfa2')"><i class="fas fa-chart-line"></i><span>Analiz</span></div>
+    <div class="nav-item" onclick="showPage('sayfa3')"><i class="fas fa-tools"></i><span>Araçlar</span></div>
+    <div class="nav-item" onclick="showPage('sayfa4')"><i class="fas fa-gift"></i><span>Motivasyon</span></div>
+    <div class="nav-item" onclick="showPage('sayfa5')"><i class="fas fa-code"></i><span>Geliştirme</span></div>
+</nav>
+
+<div id="panic-button" onclick="triggerPanic()"><i class="fas fa-biohazard"></i></div>
+<div id="panic-menu">
+    <div id="funny-msg" style="color: var(--danger); font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; text-align: center;"></div>
+    <a href="tel:+905427934893" class="panic-link"><i class="fas fa-phone"></i> Eren'i Ara</a>
+    <a href="https://wa.me/905427934893" target="_blank" class="panic-link"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+    <a href="https://instagram.com/erenyel0" target="_blank" class="panic-link"><i class="fab fa-instagram"></i> Instagram</a>
+</div>
+
+<div id="toast">İşlem Başarılı!</div>
+
+<main>
+    <section id="sayfa1" class="page active">
+        <h1>Haftalık Plan</h1>
+        <div class="card">
+            <div style="display:grid; grid-template-columns: 80px 1fr 1fr auto; gap: 10px;">
+                <input type="number" id="p-week" placeholder="Hafta">
+                <input type="text" id="p-title" placeholder="Başlık">
+                <input type="text" id="p-task" placeholder="Görev">
+                <button class="btn btn-primary" onclick="addTask()">Ekle</button>
+            </div>
+            <div id="plan-display" style="margin-top:20px"></div>
+        </div>
+        <div class="card">
+            <h3>Hızlı Geliştirme Notu</h3>
+            <textarea id="quick-note" placeholder="Fikrini buraya bırak..."></textarea>
+            <button class="btn btn-primary" onclick="addDevNote()">Kaydet</button>
+        </div>
+    </section>
+
+    <section id="sayfa2" class="page">
+        <h1>Analiz Grafiği</h1>
+        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:20px">
+            <div class="card">
+                <input type="text" id="c-label" placeholder="Parametre">
+                <input type="number" id="c-val" min="1" max="5" placeholder="Puan">
+                <button class="btn btn-primary" onclick="updateChart()">Ekle</button>
+                <button class="btn btn-danger" onclick="clearChart()" style="margin-top:10px">Sıfırla</button>
+            </div>
+            <div class="card"><canvas id="mainChart"></canvas></div>
+        </div>
+    </section>
+
+    <section id="sayfa3" class="page">
+        <h1>Teknik Araçlar</h1>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px">
+            <div class="card">
+                <h3>Renk Paleti</h3>
+                <div id="palette-inputs" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px">
+                    <input type="text" class="p-col" placeholder="#HEX" style="width:100px">
+                </div>
+                <button class="btn btn-primary" onclick="addColorInput()">+ Renk</button>
+                <button class="btn btn-primary" onclick="savePalette()">Kaydet</button>
+                <div id="palettes-list" style="margin-top:20px"></div>
+                <h3 style="margin-top:20px">Hex-Renk Dönüştürücü</h3>
+                <input type="text" id="hex-conv" placeholder="ffffff..." oninput="hexConvert()">
+                <div id="hex-res" style="height:40px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold"></div>
+            </div>
+            <div class="card">
+                <h3>Odak Sayacı</h3>
+                <input type="number" id="t-min" value="25">
+                <div style="font-size:3.5rem; text-align:center; font-family:monospace; margin:10px 0" id="t-display">25:00</div>
+                <div style="display:flex; gap:10px; justify-content:center">
+                    <button class="btn btn-primary" id="t-start" onclick="timerToggle()">Başlat</button>
+                    <button class="btn btn-danger" onclick="resetTimer()">Sıfırla</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="sayfa4" class="page">
+        <div class="progress-wrapper"><div id="main-progress" class="progress-fill"></div></div>
+        <h1>Motivasyon</h1>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px">
+            <div class="card">
+                <h3>Neden Başladın?</h3>
+                <div style="display:flex; gap:5px"><input type="text" id="reason-input" placeholder="Sebep..."><button class="btn btn-primary" onclick="addReason()">Ekle</button></div>
+                <div id="reasons-list" style="margin-top:15px"></div>
+            </div>
+            <div class="card"><h3>Haftalık Ödüller</h3><div id="reward-inputs"></div></div>
+        </div>
+        <div class="card"><div id="reward-status-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;"></div></div>
+    </section>
+
+    <section id="sayfa5" class="page">
+        <h1>Geliştirme Günlüğü</h1>
+        <div class="card" id="dev-log-container"></div>
+    </section>
+</main>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker kayıt edildi.'))
+                .catch(err => console.error('Service Worker kaydı başarısız:', err));
+        });
+    }
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBl9ARD3PU_XCA8AZ6_188Oo6Yg4I84GJY",
+        authDomain: "ece-gelisim-platformu.firebaseapp.com",
+        databaseURL: "https://ece-gelisim-platformu-default-rtdb.europe-west1.firebasedatabase.app/",
+        projectId: "ece-gelisim-platformu",
+        storageBucket: "ece-gelisim-platformu.firebasestorage.app",
+        messagingSenderId: "373551224802",
+        appId: "1:373551224802:web:d225b26fdb923be2aa0bbb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const funnyQuotes = ["Sakin ol! İstersen konuşalım biraz.", "Panikleme! Hep yanındayım.", "Stres yok! Beni ara.", "Derin nefes al, biraz mola verelim!", "Mola zamanı mı geldi?", "Eren hep sana destek olacak, hemen ulaş!"];
+
+    window.showPage = (id) => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => { if(item.getAttribute('onclick').includes(id)) item.classList.add('active'); });
+    };
+
+    window.showToast = (msg) => {
+        const t = document.getElementById('toast');
+        t.innerText = msg; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+    };
+
+    window.triggerPanic = () => {
+        const btn = document.getElementById('panic-button');
+        const menu = document.getElementById('panic-menu');
+        const msg = document.getElementById('funny-msg');
+        btn.classList.add('shake');
+        setTimeout(() => btn.classList.remove('shake'), 500);
+        msg.innerText = funnyQuotes[Math.floor(Math.random() * funnyQuotes.length)];
+        menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+    };
+
+    window.addTask = () => {
+        const w = parseInt(document.getElementById('p-week').value);
+        const t = document.getElementById('p-title').value;
+        const g = document.getElementById('p-task').value;
+        if(!w || !t || !g) return;
+        push(ref(db, 'tasks'), { week: w, title: t, task: g, done: false });
+        document.getElementById('p-task').value = '';
+    };
+    window.deleteTask = (id) => remove(ref(db, 'tasks/' + id));
+    window.toggleTask = (id, status) => update(ref(db, 'tasks/' + id), { done: !status });
+
+    onValue(ref(db, 'tasks'), (snapshot) => {
+        const data = snapshot.val();
+        const cont = document.getElementById('plan-display');
+        cont.innerHTML = '';
+        if(!data) { updateRewardsUI([]); return; }
+        const tasks = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+        tasks.sort((a,b) => a.week - b.week);
+        let cW = null, cT = null, wD, tD;
+        tasks.forEach(item => {
+            if(item.week !== cW) {
+                cW = item.week;
+                wD = document.createElement('div'); wD.className = 'card'; wD.style.padding = '0'; wD.style.marginBottom = '15px';
+                wD.innerHTML = `<div style="background:rgba(124,77,255,0.1); padding:10px; font-weight:bold; border-bottom:1px solid var(--border)">Hafta ${item.week}</div>`;
+                cont.appendChild(wD); cT = null;
+            }
+            if(item.title !== cT) {
+                cT = item.title;
+                tD = document.createElement('div'); tD.style.padding = '10px';
+                tD.innerHTML = `<div style="color:var(--accent); font-size:0.8rem; border-bottom:1px solid var(--border); margin-bottom:5px; padding-bottom:3px">${item.title}</div>`;
+                wD.appendChild(tD);
+            }
+            const row = document.createElement('div');
+            row.className = `item-row ${item.done?'task-done':''}`;
+            row.innerHTML = `<input type="checkbox" ${item.done?'checked':''} onclick="toggleTask('${item.id}', ${item.done})"><span style="flex:1">${item.task}</span><i class="fas fa-trash delete-icon" onclick="deleteTask('${item.id}')"></i>`;
+            tD.appendChild(row);
+        });
+        updateRewardsUI(tasks);
+    });
+
+    window.addReason = () => {
+        const i = document.getElementById('reason-input');
+        if(!i.value) return;
+        push(ref(db, 'reasons'), { text: i.value });
+        i.value = '';
+    };
+    window.deleteReason = (id) => remove(ref(db, 'reasons/' + id));
+    onValue(ref(db, 'reasons'), (snapshot) => {
+        const data = snapshot.val();
+        const cont = document.getElementById('reasons-list');
+        cont.innerHTML = '';
+        if(data) Object.keys(data).forEach(k => {
+            cont.innerHTML += `<div class="item-row"><span>✓ ${data[k].text}</span><i class="fas fa-trash delete-icon" onclick="deleteReason('${k}')"></i></div>`;
+        });
+    });
+
+    window.saveReward = (w, v) => set(ref(db, 'rewards/' + w), v);
+    function updateRewardsUI(tasks) {
+        onValue(ref(db, 'rewards'), (snapshot) => {
+            const rewards = snapshot.val() || {};
+            const grid = document.getElementById('reward-status-grid');
+            grid.innerHTML = '';
+            const doneCount = tasks.filter(t => t.done).length;
+            const progress = tasks.length ? (doneCount/tasks.length)*100 : 0;
+            const progBar = document.getElementById('main-progress');
+            if(progBar) progBar.style.width = progress + '%';
+            for(let i=1; i<=12; i++) {
+                const weekTasks = tasks.filter(t => t.week === i);
+                const isC = weekTasks.length > 0 && weekTasks.every(t => t.done);
+                const b = document.createElement('div'); b.className = `card`;
+                b.style = `margin-bottom:0; padding:10px; opacity:${isC?'1':'0.4'}; border:1px solid ${isC?'var(--success)':'var(--border)'}`;
+                b.innerHTML = `<div style="font-size:0.7rem">Hafta ${i} ${isC ? '🔓' : '🔒'}</div><div style="font-weight:bold">${rewards[i]||'Tanımsız'}</div>`;
+                grid.appendChild(b);
+            }
+        }, { onlyOnce: true });
+    }
+
+    window.addDevNote = () => {
+        const txt = document.getElementById('quick-note').value;
+        if(!txt) return;
+        push(ref(db, 'devnotes'), { date: new Date().toLocaleString('tr-TR'), text: txt });
+        document.getElementById('quick-note').value = ''; showToast("Not Kaydedildi.");
+    };
+    window.deleteDevNote = (id) => remove(ref(db, 'devnotes/' + id));
+    onValue(ref(db, 'devnotes'), (snapshot) => {
+        const data = snapshot.val();
+        const cont = document.getElementById('dev-log-container');
+        cont.innerHTML = '';
+        if(data) Object.keys(data).reverse().forEach(k => {
+            cont.innerHTML += `<div class="item-row"><span style="font-size:0.8rem"><b style="color:var(--accent)">[${data[k].date}]</b> ${data[k].text}</span><i class="fas fa-trash delete-icon" onclick="deleteDevNote('${k}')"></i></div>`;
+        });
+    });
+
+    window.addColorInput = () => {
+        const i = document.createElement('input'); i.type = 'text'; i.className = 'p-col'; i.placeholder = '#HEX'; i.style.width = '100px';
+        document.getElementById('palette-inputs').appendChild(i);
+    };
+    window.savePalette = () => {
+        const cols = Array.from(document.querySelectorAll('.p-col')).map(i => i.value).filter(v => v.startsWith('#'));
+        if(cols.length) push(ref(db, 'palettes'), cols);
+    };
+    window.deletePalette = (id) => remove(ref(db, 'palettes/' + id));
+    onValue(ref(db, 'palettes'), (snapshot) => {
+        const data = snapshot.val();
+        const cont = document.getElementById('palettes-list');
+        cont.innerHTML = '';
+        if(data) Object.keys(data).forEach(k => {
+            cont.innerHTML += `<div class="card" style="margin-bottom:10px; padding:10px"><div style="display:flex; justify-content:space-between; font-size:0.8rem"><span>Palet</span><i class="fas fa-trash delete-icon" onclick="deletePalette('${k}')"></i></div><div style="display:flex; height:30px; border-radius:4px; overflow:hidden; margin-top:5px">${data[k].map(c => `<div style="background:${c}; flex:1; cursor:pointer; font-size:0.6rem; display:flex; align-items:center; justify-content:center" onclick="navigator.clipboard.writeText('${c}'); showToast('Kopyalandı')">${c}</div>`).join('')}</div></div>`;
+        });
+    });
+
+    window.hexConvert = () => {
+        const v = document.getElementById('hex-conv').value;
+        const col = v.startsWith('#') ? v : '#' + v;
+        const res = document.getElementById('hex-res');
+        res.style.background = col; res.innerText = col.toUpperCase();
+    };
+
+    let tInt, tLeft;
+    window.timerToggle = () => {
+        const btn = document.getElementById('t-start');
+        if(tInt) { clearInterval(tInt); tInt = null; btn.innerText = "Devam Et"; }
+        else {
+            if(!tLeft) tLeft = document.getElementById('t-min').value * 60;
+            btn.innerText = "Durdur";
+            tInt = setInterval(() => {
+                tLeft--;
+                const m = Math.floor(tLeft/60), s = tLeft%60;
+                document.getElementById('t-display').innerText = `${m}:${s<10?'0':''}${s}`;
+                if(tLeft <= 0) { clearInterval(tInt); window.resetTimer(); showToast("Odak süresi bitti!"); }
+            }, 1000);
+        }
+    };
+    window.resetTimer = () => { 
+        clearInterval(tInt); 
+        tInt = null; 
+        tLeft = null; 
+        document.getElementById('t-display').innerText = document.getElementById('t-min').value + ":00"; 
+        document.getElementById('t-start').innerText = "Başlat";
+    };
+
+    onValue(ref(db, 'rewards'), (snapshot) => {
+        const saved = snapshot.val() || {};
+        const cont = document.getElementById('reward-inputs');
+        if(cont) {
+            cont.innerHTML = '';
+            for(let i=1; i<=12; i++) {
+                cont.innerHTML += `<div style="display:flex; align-items:center; gap:10px"><span style="min-width:60px; font-size:0.7rem">H. ${i}:</span><input type="text" value="${saved[i]||''}" onchange="saveReward(${i}, this.value)"></div>`;
+            }
+        }
+    });
+
+    let chartObj;
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    onValue(ref(db, 'analysis'), (snapshot) => {
+        const d = snapshot.val() || {l:[], v:[]};
+        if(!chartObj) {
+            chartObj = new Chart(ctx, {
+                type: 'radar',
+                data: { labels: d.l, datasets: [{ data: d.v, backgroundColor: 'rgba(124,77,255,0.2)', borderColor:'#7C4DFF' }] },
+                options: { scales: { r: { beginAtZero:true, max:5, grid:{color:'#2D3748'}, ticks:{display:false} } }, plugins:{legend:{display:false}} }
+            });
+        } else {
+            chartObj.data.labels = d.l;
+            chartObj.data.datasets[0].data = d.v;
+            chartObj.update();
+        }
+    });
+
+    window.updateChart = () => {
+        const l = document.getElementById('c-label').value;
+        const v = document.getElementById('c-val').value;
+        if(!l || !v) return;
+        onValue(ref(db, 'analysis'), (snapshot) => {
+            const d = snapshot.val() || {l:[], v:[]};
+            d.l.push(l); d.v.push(v);
+            set(ref(db, 'analysis'), d);
+        }, { onlyOnce: true });
+    };
+
+    window.clearChart = () => remove(ref(db, 'analysis'));
+
+</script>
+</body>
+</html>
