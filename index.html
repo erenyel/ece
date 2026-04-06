@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#7C4DFF">
     
     <link rel="icon" href="icon-512.png">
-    <link rel="apple-touch-icon" href="icon-512.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -139,7 +139,7 @@
 <body>
 
 <header>
-    <img src="icon-512.png" alt="Logo" class="header-logo">
+    <img src="icon-192.png" alt="Logo" class="header-logo">
     ECE GELİŞİM PLATFORMU
 </header>
 
@@ -244,8 +244,8 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker kayıt edildi.'))
-                .catch(err => console.error('Service Worker kaydı başarısız:', err));
+                .then(reg => console.log('SW kayıt edildi.'))
+                .catch(err => console.error('SW hatası:', err));
         });
     }
 </script>
